@@ -41,7 +41,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* IA_Mover;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_Pular;
+
 public:
 
 	void IniciarMovimento(const FInputActionValue& value);
+
+	void Pular(const FInputActionValue& value);
 };

@@ -8,7 +8,6 @@
 class GEngine;
 
 AMyPlayerController::AMyPlayerController() {
-
 }
 
 void AMyPlayerController::BeginPlay() {
@@ -32,9 +31,15 @@ void AMyPlayerController::SetupInputComponent() {
 	UEnhancedInputComponent* EnhancedInput = CastChecked<UEnhancedInputComponent>(InputComponent);
 
 	EnhancedInput->BindAction(IA_Mover, ETriggerEvent::Triggered, this, &AMyPlayerController::IniciarMovimento);
+	EnhancedInput->BindAction(IA_Pular, ETriggerEvent::Triggered, this, &AMyPlayerController::Pular);
 }
 
 void AMyPlayerController::IniciarMovimento(const FInputActionValue& value) {
 	float Movimento = value.Get<float>();
-	Peao->MovimentoNoFrame.Y = Movimento * 100.f;
+	Peao->DirecaoMovimento = FVector(0.0f, FMath::Clamp(Movimento,-1.f, 1.f), 0.0f);
+}
+
+void AMyPlayerController::Pular(const FInputActionValue& value) {
+	Peao->Forca.Z = 500.f;
+	Peao->EstaNoChao = false;
 }
