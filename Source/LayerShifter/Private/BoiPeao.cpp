@@ -57,7 +57,7 @@ void ABoiPeao::Tick(float DeltaTime)
 		AddActorWorldOffset(DirecaoMovimento * Velocidade * DeltaTime, true, &Hit);
 
 		if (Hit.bBlockingHit && Hit.ImpactNormal.Z > 0.8f) {
-			Forca.Z = 0.0f;
+			Forca.Z = 0.f;
 		}
 	}
 
@@ -71,8 +71,7 @@ void ABoiPeao::Tick(float DeltaTime)
 		}
 
 		if (Hit.bBlockingHit && Hit.ImpactNormal.Z < 0.8f) {
-			Forca = FVector::VectorPlaneProject(Forca, Hit.ImpactNormal);
-			AddActorWorldOffset(Forca * DeltaTime, true);
+			AddActorWorldOffset(FVector::VectorPlaneProject(Forca, Hit.ImpactNormal) * DeltaTime, true);
 		}
 	}
 }
