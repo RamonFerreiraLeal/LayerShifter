@@ -61,12 +61,12 @@ void ABoiPeao::Tick(float DeltaTime)
 		}
 	}
 
-	if (!HitVerificaChao.IsValidBlockingHit() || Forca.Z > 0.0f) {
+	if (!HitVerificaChao.IsValidBlockingHit()|| Forca.Z > 0.0f) {
 		Forca.Z += ForcaDeGravidade * DeltaTime;
 		AddActorWorldOffset(Forca * DeltaTime, true, &Hit);
 
-		if (Hit.ImpactNormal.Z <= -0.3f && Hit.ImpactNormal.Z >= -1.1f) {
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Bateu no teto"));
+		if (Hit.ImpactNormal.Z <= -0.3f && Hit.ImpactNormal.Z >= -1.1f || Hit.ImpactNormal.Z > 0.8f) {
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Bateu no teto ou no chao"));
 			Forca.Z = 0.0f;
 		}
 
