@@ -40,28 +40,63 @@ void ABoiPeao::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!EstaNoChao) {
+	FHitResult Hit;
+	FHitResult HitVerificaChao;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	GetWorld()->LineTraceSingleByChannel(HitVerificaChao, GetActorLocation(), GetActorLocation() + FVector::DownVector * (110.f), ECC_Visibility, Params);
+	DrawDebugLine(GetWorld(), HitVerificaChao.TraceStart, HitVerificaChao.ImpactPoint, FColor::Red, false, -1.0f, 1, 5.0f);
+
+	if (!DirecaoMovimento.IsNearlyZero()) {
+		if (HitVerificaChao.IsValidBlockingHit()) {
+			DirecaoMovimento = FVector::VectorPlaneProject(DirecaoMovimento, HitVerificaChao.ImpactNormal);
+		}
+
+		AddActorWorldOffset(DirecaoMovimento * Velocidade * DeltaTime, true, &Hit);
+
+		if (Hit.bBlockingHit && Hit.ImpactNormal.Z > 0.8f) {
+			Forca.Z = 0.0f;
+		}
+	}
+
+	if (!HitVerificaChao.IsValidBlockingHit() || Forca.Z > 0.0f) {
+		Forca.Z += ForcaDeGravidade * DeltaTime;
+		AddActorWorldOffset(Forca * DeltaTime, true, &Hit);
+
+		if (Hit.ImpactNormal.Z <= -0.3f && Hit.ImpactNormal.Z >= -1.1f) {
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Bateu no teto"));
+			Forca.Z = 0.0f;
+		}
+
+		if (Hit.bBlockingHit && Hit.ImpactNormal.Z < 0.8f) {
+			Forca = FVector::VectorPlaneProject(Forca, Hit.ImpactNormal);
+			AddActorWorldOffset(Forca * DeltaTime, true);
+		}
+	}
+}
+
+/*if (!EstaNoChao) {
 		Forca.Z += ForcaDeGravidade * DeltaTime;
 	}
 
 	FHitResult HitResult;
-	
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
 
 	if (EstaNoChao) {
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
 
-		//GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), (GetActorLocation() + FVector::DownVector * 100.f) + DirecaoMovimento * 50.f, ECC_Visibility, Params);
 		GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), (GetActorLocation() + FVector::DownVector * 110.f), ECC_Visibility, Params);
 
 		DrawDebugLine(GetWorld(), HitResult.TraceStart, HitResult.ImpactPoint, FColor::Red, false, -1.0f, 1, 5.0f);
 		DrawDebugCoordinateSystem(GetWorld(), HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), 10.f, false, -1.0f, 1, 5.0f);
 
 		if (HitResult.bBlockingHit) {
-			DirecaoMovimento = FVector::CrossProduct(HitResult.ImpactNormal, FVector(1.0f, 0.f, 0.f)).GetUnsafeNormal().GetAbs() * DirecaoMovimento.Y;
+			DirecaoMovimento = FVector::CrossProduct(HitResult.ImpactNormal, FVector(1.0f, 0.f, 0.f)).GetUnsafeNormal() * DirecaoMovimento.Y;
 		}
 
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + DirecaoMovimento * 100.f, FColor::Red, false, -1.0f, 1, 5.0f);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + DirecaoMovimento * 100.f, FColor::Purple, false, -1.0f, 1, 5.0f);
 		UE_LOG(LogTemp, Display, TEXT("Vetor2 de Impact %s"), *HitResult.ImpactNormal.ToString());
 	}
 
@@ -70,28 +105,45 @@ void ABoiPeao::Tick(float DeltaTime)
 	MovimentoAtual += Forca * DeltaTime;
 
 	if (!MovimentoAtual.IsNearlyZero()) {
-
 		FHitResult Hit;
 		AddActorWorldOffset(MovimentoAtual, true, &Hit);
+		
+		//Verifica proximo movimento
+		FHitResult HitResultProximoPasso;
+		GetWorld()->LineTraceSingleByChannel(HitResultProximoPasso, GetActorLocation(), GetActorLocation() + (FVector::DownVector) * 110.f + (DirecaoMovimento * 60.f), ECC_Visibility, Params);
+		DrawDebugLine(GetWorld(), HitResultProximoPasso.TraceStart, HitResultProximoPasso.ImpactPoint, FColor::Red, false, -1.0f, 1, 5.0f);
 
-		//UE_LOG(LogTemp, Display, TEXT("Vetor de Impact %s"), *Hit.ImpactNormal.ToString());
+		UE_LOG(LogTemp, Display, TEXT("Hit Impact Normal %s"), *Hit.ImpactNormal.ToString());
 
-		if ((Hit.ImpactNormal.Z > 0.7f || HitResult.ImpactNormal.Z > 0.7f)) {
+
+		if ((Hit.ImpactNormal.Z > 0.8f || HitResult.bBlockingHit && Hit.IsValidBlockingHit())) {
 			EstaNoChao = true;
 			EstaNaParede = false;
 			Forca.Z = 0.0f;
-		}
-		else if (!EstaNoChao && (Hit.ImpactNormal.Y > 0.7f || Hit.ImpactNormal.Y < -0.7f)) {
-			EstaNaParede = true;
-			UE_LOG(LogTemp, Display, TEXT("Esta na parede"));
-			AddActorWorldOffset(FVector::VectorPlaneProject(Forca, Hit.ImpactNormal) * DeltaTime, true);
-		}
-		else {
+		}else {
 			EstaNoChao = false;
 		}
-	}
+		if ((Hit.ImpactNormal.Y > 0.6f || Hit.ImpactNormal.Y < -0.6f)) {
+			EstaNaParede = true;
+			UE_LOG(LogTemp, Display, TEXT("Esta Na Parede"));
 
-}
+			FVector Margem = Hit.ImpactPoint - (GetActorLocation() + FVector::DownVector * 95.f);
+
+			if (HitResultProximoPasso.bBlockingHit && Margem.Z > 0.0f && Margem.Z < 20.f) {
+				//FVector Slide = FVector::VectorPlaneProject(MovimentoAtual, Hit.ImpactNormal);
+				//AddActorLocalOffset(Slide, false);
+
+				UE_LOG(LogTemp, Display, TEXT("Entrou em subir degrau"));
+
+				AddActorLocalOffset(Margem, true);
+
+				AddActorLocalOffset(MovimentoAtual, true);
+			}
+			else {
+				AddActorWorldOffset(FVector::VectorPlaneProject(Forca, Hit.ImpactNormal) * DeltaTime, true);
+			}
+		}
+	}*/
 
 // Called to bind functionality to input
 void ABoiPeao::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
