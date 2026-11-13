@@ -7,12 +7,15 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "BoiPeao.h"
+#include "Blueprint/UserWidget.h"
+#include "OrquestradorDeLayer.h"
 #include "MyPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
 class ABoiPeao;
 class ULocalPlayer;
+class UUserWidget;
 
 /**
  * 
@@ -44,9 +47,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* IA_Pular;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* IA_Alternar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hud")
+	TSubclassOf<UUserWidget> HudPadrao;
+
+	UPROPERTY()
+	UUserWidget* InstanciaPadrao;
+
 public:
 
 	void IniciarMovimento(const FInputActionValue& value);
 
 	void Pular(const FInputActionValue& value);
+
+	void AlternarCena(const FInputActionValue& value);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orquestrador")
+	AOrquestradorDeLayer* OrquestradorDeLayer;
 };

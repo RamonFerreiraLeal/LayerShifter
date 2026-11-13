@@ -23,6 +23,15 @@ void AMyPlayerController::BeginPlay() {
 		Peao = Cast<ABoiPeao>(GetPawn());
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Usando Peao Boi"));
 	}
+
+	if (!InstanciaPadrao) {
+		if (IsLocalController() && HudPadrao) {
+			InstanciaPadrao = CreateWidget<UUserWidget>(this, HudPadrao);
+			if (InstanciaPadrao) {
+				InstanciaPadrao->AddToViewport();
+			}
+		}
+	}
 }
 
 void AMyPlayerController::SetupInputComponent() {
@@ -32,6 +41,8 @@ void AMyPlayerController::SetupInputComponent() {
 
 	EnhancedInput->BindAction(IA_Mover, ETriggerEvent::Triggered, this, &AMyPlayerController::IniciarMovimento);
 	EnhancedInput->BindAction(IA_Pular, ETriggerEvent::Triggered, this, &AMyPlayerController::Pular);
+	EnhancedInput->BindAction(IA_Alternar, ETriggerEvent::Triggered, this, &AMyPlayerController::AlternarCena);
+
 }
 
 void AMyPlayerController::IniciarMovimento(const FInputActionValue& value) {
@@ -42,4 +53,10 @@ void AMyPlayerController::IniciarMovimento(const FInputActionValue& value) {
 void AMyPlayerController::Pular(const FInputActionValue& value) {
 	Peao->Forca.Z = 500.f;
 	Peao->EstaNoChao = false;
+}
+
+void AMyPlayerController::AlternarCena(const FInputActionValue& value) {
+	if (OrquestradorDeLayer) {
+		OrquestradorDeLayer->AlternaLayer();
+	}
 }
